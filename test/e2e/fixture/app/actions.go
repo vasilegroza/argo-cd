@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"slices"
 	"strconv"
 
 	log "github.com/sirupsen/logrus"
@@ -223,16 +224,41 @@ func (a *Actions) prepareCreateAppArgs(args []string) []string {
 	a.context.t.Helper()
 	args = append([]string{
 		"app", "create", a.context.AppQualifiedName(),
-		"--repo", fixture.RepoURL(a.context.repoURLType),
 	}, args...)
 
-	if a.context.destName != "" {
+	if a.context.drySourceRevision != "" || a.context.drySourcePath != "" || a.context.syncSourcePath != "" || a.context.syncSourceBranch != "" || a.context.hydrateToBranch != "" {
+		args = append(args, "--dry-source-repo", fixture.RepoURL(a.context.repoURLType))
+	} else {
+		args = append(args, "--repo", fixture.RepoURL(a.context.repoURLType))
+	}
+
+	if a.context.destName != "" && a.context.isDestServerInferred && !slices.Contains(args, "--dest-server") {
 		args = append(args, "--dest-name", a.context.destName)
 	} else {
 		args = append(args, "--dest-server", a.context.destServer)
 	}
 	if a.context.path != "" {
 		args = append(args, "--path", a.context.path)
+	}
+
+	if a.context.drySourceRevision != "" {
+		args = append(args, "--dry-source-revision", a.context.drySourceRevision)
+	}
+
+	if a.context.drySourcePath != "" {
+		args = append(args, "--dry-source-path", a.context.drySourcePath)
+	}
+
+	if a.context.syncSourceBranch != "" {
+		args = append(args, "--sync-source-branch", a.context.syncSourceBranch)
+	}
+
+	if a.context.syncSourcePath != "" {
+		args = append(args, "--sync-source-path", a.context.syncSourcePath)
+	}
+
+	if a.context.hydrateToBranch != "" {
+		args = append(args, "--hydrate-to-branch", a.context.hydrateToBranch)
 	}
 
 	if a.context.chart != "" {
